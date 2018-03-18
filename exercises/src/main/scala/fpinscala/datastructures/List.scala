@@ -8,6 +8,45 @@ which may be `Nil` or another `Cons`.
 case class Cons[+A](head: A, tail: List[A]) extends List[A]
 
 object List { // `List` companion object. Contains functions for creating and working with lists.
+  def main(args: Array[String]): Unit = {
+    val list = List(1,2,3,4,5)
+
+    print("List tail: ")
+    println(List.tail(list))
+
+    print("List drop (3): ")
+    println(List.drop(list, 3))
+
+    def f(x: Int): Boolean = x < 3
+
+    print("List drop while < 3: ")
+    println(List.dropWhile(list, f))
+
+    print("List init: ")
+    println(List.init(list))
+
+    print("List length: ")
+    println(List.length(list))
+
+    print("List foldRight: ")
+    println(List.foldRight(List(1,2,3), Nil:List[Int])(Cons(_,_)))
+
+    print("foldLeft Sum (1+2+3): ")
+    println(List.sum_left(List(1,2,3)))
+
+    print("folded product (1*2*3): ")
+    println(List.product_left(List(1,2,3)))
+
+    print("folded product (1*2*0): ")
+    println(List.product_left(List(1,2,0)))
+
+    print("left folded length: ")
+    println(List.length_left(list))
+
+    print("reversed list: ")
+    println(List.reverse(list))
+  }
+
   def sum(ints: List[Int]): Int = ints match { // A function that uses pattern matching to add up a list of integers
     case Nil => 0 // The sum of the empty list is 0.
     case Cons(x,xs) => x + sum(xs) // The sum of a list starting with `x` is `x` plus the sum of the rest of the list.
@@ -50,19 +89,60 @@ object List { // `List` companion object. Contains functions for creating and wo
     foldRight(ns, 1.0)(_ * _) // `_ * _` is more concise notation for `(x,y) => x * y`; see sidebar
 
 
-  def tail[A](l: List[A]): List[A] = ???
+  def tail[A](l: List[A]): List[A] = l match {
+    case Nil => Nil
+    case Cons(_, xs) => xs
+  }
 
-  def setHead[A](l: List[A], h: A): List[A] = ???
+  def setHead[A](l: List[A], h: A): List[A] = l match {
+    case Nil => sys.error("Can't set head of empty list.")
+    case Cons(_, xs) => Cons(h, xs)
+  }
 
-  def drop[A](l: List[A], n: Int): List[A] = ???
+  def drop[A](l: List[A], n: Int): List[A] = {
+    if (n <= 0) l
+    else l match {
+      case Nil => Nil
+      case Cons(_, xs) => List.drop(xs, n - 1)
+    }
+  }
 
-  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = ???
+  def dropWhile[A](l: List[A], f: A => Boolean): List[A] = l match {
+    case Nil => Nil
+    case Cons(x, xs) => {
+      if (f(x)) List.dropWhile(xs, f)
+      else Cons(x, xs)
+    }
+  }
 
-  def init[A](l: List[A]): List[A] = ???
+  def init[A](l: List[A]): List[A] = l match {
+    case Nil => sys.error("Can't drop tail element of empty list")
+    case Cons(x, xs) => {
+      if (xs == Nil) Nil
+      else Cons(x, init(xs))
+    }
+  }
 
-  def length[A](l: List[A]): Int = ???
+  def length[A](l: List[A]): Int =
+    List.foldRight(l, 0)((_, acc) => acc + 1)
 
-  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = ???
+  @scala.annotation.tailrec
+  def foldLeft[A,B](l: List[A], z: B)(f: (B, A) => B): B = l match {
+    case Nil => z
+    case Cons(x, xs) => List.foldLeft(xs, f(z,x))(f)
+  }
+
+  def sum_left(ints: List[Int]): Int =
+    List.foldLeft(ints, 0)(_+_)
+
+  def product_left(ints: List[Int]): Int =
+    List.foldLeft(ints, 1)(_*_)
+
+  def length_left(ints: List[Int]): Int =
+    List.foldLeft(ints, 0)((acc,_) => acc + 1)
+
+  def reverse[A](l: List[A]): List[A] =
+    List.foldLeft(l, Nil:List[A])((reversed, elem) => Cons(elem, reversed))
 
   def map[A,B](l: List[A])(f: A => B): List[B] = ???
 }
